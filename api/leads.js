@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   // across 4k+ records. Anything not in this list is omitted from the response.
   const fields = [
     'Brand Name',
+    'Brand Type',
     'Website',
     'CEO Name',
     'CEO Email',
@@ -43,6 +44,9 @@ export default async function handler(req, res) {
   const params = new URLSearchParams();
   fields.forEach((f) => params.append('fields[]', f));
   params.set('pageSize', '100');
+  // Filter to Brand Type = "Established" only (drops Influencer + Adjacent)
+  // FIND returns position (1+) if the value is in the multipleSelects field, 0 otherwise.
+  params.set('filterByFormula', `FIND("Established", ARRAYJOIN({Brand Type})) > 0`);
 
   const all = [];
   let offset = null;
