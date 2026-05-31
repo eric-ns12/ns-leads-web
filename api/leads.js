@@ -44,9 +44,10 @@ export default async function handler(req, res) {
   const params = new URLSearchParams();
   fields.forEach((f) => params.append('fields[]', f));
   params.set('pageSize', '100');
-  // Filter to Brand Type = "Established" only (drops Influencer + Adjacent)
-  // FIND returns position (1+) if the value is in the multipleSelects field, 0 otherwise.
-  params.set('filterByFormula', `FIND("Established", ARRAYJOIN({Brand Type})) > 0`);
+  // Use Eric's curated view (filters + sort already configured in Airtable).
+  // Override via AIRTABLE_VIEW_ID env var if you want a different view.
+  const viewId = process.env.AIRTABLE_VIEW_ID || 'viwAoPiES9KMD3IVG';
+  params.set('view', viewId);
 
   const all = [];
   let offset = null;
