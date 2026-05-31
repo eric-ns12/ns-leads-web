@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NS Leads — Brands</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            linen: '#F1EDE5',
+            ink: '#1B1A17',
+            hair: '#D9D2C4',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html, body { background-color: #F1EDE5; }
+    body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; color: #1B1A17; }
+    .tnum { font-variant-numeric: tabular-nums; }
+    .hair { border-color: #D9D2C4; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background-color: #EAE4D5; }
+    .row:hover { background-color: #EAE4D5; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    /* Side panel */
+    .panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(560px, 100vw);
+      background: #FBF8F1;
+      border-left: 1px solid #D9D2C4;
+      box-shadow: -8px 0 32px rgba(27, 26, 23, 0.06);
+      transform: translateX(100%);
+      transition: transform 220ms ease;
+      overflow-y: auto;
+      z-index: 50;
+    }
+    .panel.open { transform: translateX(0); }
+    .panel-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(27, 26, 23, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+      z-index: 40;
+    }
+    .panel-backdrop.open { opacity: 1; pointer-events: auto; }
+    .sort-indicator {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      margin-left: 4px;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      vertical-align: middle;
+      opacity: 0.7;
+    }
+    .sort-indicator.asc  { border-bottom: 5px solid #1B1A17; }
+    .sort-indicator.desc { border-top: 5px solid #1B1A17; }
+    /* dense table */
+    .leads-table td, .leads-table th { padding: 8px 12px; }
+    .leads-table { border-collapse: separate; border-spacing: 0; }
+    .leads-table thead th {
+      position: sticky;
+      top: 0;
+      background: #F1EDE5;
+      z-index: 10;
+      border-bottom: 1px solid #D9D2C4;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #5C574D;
+    }
+    .leads-table tbody td {
+      border-bottom: 1px solid #E5DECF;
+      font-size: 13px;
+    }
+    .truncate-cell {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    a.lnk { color: #1B1A17; text-decoration: underline; text-decoration-color: #B8AE99; text-underline-offset: 2px; }
+    a.lnk:hover { text-decoration-color: #1B1A17; }
+  </style>
+</head>
+<body>
+  <header class="border-b hair">
+    <div class="max-w-[1400px] mx-auto px-6 py-5 flex items-baseline justify-between gap-6">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight">NS Leads</h1>
+        <p id="meta" class="text-xs text-[#5C574D] mt-0.5">Loading leads from Airtable&hellip;</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <input
+          id="q"
+          type="search"
+          autocomplete="off"
+          placeholder="Search brand, CEO, email, country&hellip;"
+          class="w-[360px] px-3 py-2 text-sm bg-white border hair rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B1A17]/10 focus:border-[#1B1A17]/40"
+        />
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1400px] mx-auto px-6 py-6">
+    <div id="status" class="text-sm text-[#5C574D] mb-4"></div>
+    <div class="bg-white border hair rounded-lg overflow-hidden">
+      <div class="overflow-x-auto max-h-[calc(100vh-180px)] overflow-y-auto">
+        <table class="leads-table w-full tnum" id="table">
+          <thead>
+            <tr id="head"></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="panelBackdrop" class="panel-backdrop"></div>
+  <aside id="panel" class="panel" aria-hidden="true">
+    <div class="px-6 py-5 border-b hair flex items-start justify-between gap-4 sticky top-0 bg-[#FBF8F1] z-10">
+      <div>
+        <p class="text-[11px] uppercase tracking-wider text-[#5C574D]">Lead detail</p>
+        <h2 id="panelTitle" class="text-lg font-semibold mt-0.5">&nbsp;</h2>
+      </div>
+      <button
+        id="panelClose"
+        class="text-[#5C574D] hover:text-[#1B1A17] text-2xl leading-none px-2"
+        aria-label="Close"
+      >&times;</button>
+    </div>
+    <div id="panelBody" class="px-6 py-5 text-sm"></div>
+  </aside>
+
+  <script>
+    // ============================================================
+    // Column definition: order, label, getter, formatter, sortable
+    // ============================================================
+    const COLUMNS = [
+      {
+        key: 'Brand Name',
+        label: 'Brand',
+        type: 'text',
+        get: (r) => r['Brand Name'] || '',
+        render: (v) => escapeHTML(v) || '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'Website',
+        label: 'Website',
+        type: 'text',
+        get: (r) => r['Website'] || '',
+        render: (v) => {
+          if (!v) return '<span class="text-[#A39B89]">&mdash;</span>';
+          let host = v;
+          try { host = new URL(v).hostname.replace(/^www\./, ''); } catch {}
+          return `<a class="lnk" href="${escapeAttr(v)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escapeHTML(host)}</a>`;
+        },
+      },
+      {
+        key: 'CEO Name',
+        label: 'CEO',
+        type: 'text',
+        get: (r) => r['CEO Name'] || '',
+        render: (v) => escapeHTML(v) || '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'CEO Email',
+        label: 'Email',
+        type: 'text',
+        get: (r) =>
+          r['CEO Email'] || r['CEO Work Email'] || r['CEO Personal Email'] || r['Management_Email'] || '',
+        render: (v) => v
+          ? `<a class="lnk" href="mailto:${escapeAttr(v)}" onclick="event.stopPropagation()">${escapeHTML(v)}</a>`
+          : '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'CEO Phone',
+        label: 'Phone',
+        type: 'text',
+        get: (r) => r['CEO Phone'] || r['Management_Phone'] || '',
+        render: (v) => escapeHTML(v) || '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'Country',
+        label: 'Country',
+        type: 'text',
+        get: (r) => extractSelect(r['Country']) || '',
+        render: (v) => escapeHTML(v) || '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'Pipeline Status',
+        label: 'Pipeline',
+        type: 'text',
+        get: (r) => extractSelect(r['Pipeline Status']) || '',
+        render: (v) => v ? pill(v) : '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'Brand Status',
+        label: 'Status',
+        type: 'text',
+        get: (r) => extractSelect(r['Brand Status']) || '',
+        render: (v) => v ? pill(v) : '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: 'Source',
+        label: 'Source',
+        type: 'text',
+        get: (r) => extractSelect(r['Source']) || '',
+        render: (v) => escapeHTML(v) || '<span class="text-[#A39B89]">&mdash;</span>',
+      },
+      {
+        key: '[Total] Est. Monthly Revenue',
+        label: 'Est. Mo. Rev',
+        type: 'number',
+        get: (r) => Number(r['[Total] Est. Monthly Revenue']) || 0,
+        render: (v) => v ? `<span class="tnum">$${formatNum(v)}</span>` : '<span class="text-[#A39B89]">&mdash;</span>',
+        align: 'right',
+      },
+      {
+        key: 'Last Modified',
+        label: 'Last Modified',
+        type: 'date',
+        get: (r) => r['Last Modified'] || '',
+        render: (v) => v ? `<span class="tnum text-[#5C574D]">${formatDate(v)}</span>` : '<span class="text-[#A39B89]">&mdash;</span>',
+        align: 'right',
+      },
+    ];
+
+    // Semantic colors for known status values
+    const PILL_COLORS = {
+      // greens — hot / fresh
+      'fresh leads': { bg: '#E4F1DC', fg: '#2F5414' },
+      'new brand':   { bg: '#E4F1DC', fg: '#2F5414' },
+      'qualified':   { bg: '#E4F1DC', fg: '#2F5414' },
+      'hot':         { bg: '#E4F1DC', fg: '#2F5414' },
+      'active':      { bg: '#E4F1DC', fg: '#2F5414' },
+      // blues — in progress
+      'in progress': { bg: '#DFE9F3', fg: '#1F3D5C' },
+      'contacted':   { bg: '#DFE9F3', fg: '#1F3D5C' },
+      'nurture':     { bg: '#DFE9F3', fg: '#1F3D5C' },
+      'researching': { bg: '#DFE9F3', fg: '#1F3D5C' },
+      'ig found':    { bg: '#DFE9F3', fg: '#1F3D5C' },
+      // amber — needs review
+      'needs review':{ bg: '#F6E8C7', fg: '#5C4014' },
+      'review':      { bg: '#F6E8C7', fg: '#5C4014' },
+      'pending':     { bg: '#F6E8C7', fg: '#5C4014' },
+      // red — cold / dead
+      'cold':        { bg: '#F3DCDC', fg: '#5C1E1E' },
+      'dead':        { bg: '#F3DCDC', fg: '#5C1E1E' },
+      'lost':        { bg: '#F3DCDC', fg: '#5C1E1E' },
+      'no ig found': { bg: '#E8E3D6', fg: '#5C574D' },
+    };
+
+    let RAW = [];
+    let VIEW = [];
+    let sortKey = 'Last Modified';
+    let sortDir = 'desc';
+
+    // ============================================================
+    // Boot
+    // ============================================================
+    init();
+
+    async function init() {
+      renderHead();
+      try {
+        const r = await fetch('/api/leads');
+        if (!r.ok) {
+          const t = await r.text();
+          throw new Error(`HTTP ${r.status}: ${t.slice(0, 200)}`);
+        }
+        const data = await r.json();
+        RAW = Array.isArray(data.leads) ? data.leads : [];
+        document.getElementById('meta').textContent =
+          `${RAW.length.toLocaleString()} leads loaded`;
+        applyFilterAndSort();
+      } catch (err) {
+        document.getElementById('status').innerHTML =
+          `<span class="text-[#5C1E1E]">Failed to load leads: ${escapeHTML(err.message)}</span>`;
+        console.error(err);
+      }
+    }
+
+    document.getElementById('q').addEventListener('input', debounce(applyFilterAndSort, 150));
+
+    function renderHead() {
+      const head = document.getElementById('head');
+      head.innerHTML = COLUMNS.map((c, i) => {
+        const align = c.align === 'right' ? 'text-right' : 'text-left';
+        return `<th class="sortable ${align}" data-key="${escapeAttr(c.key)}">${escapeHTML(c.label)}<span class="sort-indicator" id="si-${i}"></span></th>`;
+      }).join('');
+      head.querySelectorAll('th.sortable').forEach((th) => {
+        th.addEventListener('click', () => {
+          const k = th.getAttribute('data-key');
+          if (sortKey === k) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+          else { sortKey = k; sortDir = 'asc'; }
+          applyFilterAndSort();
+        });
+      });
+    }
+
+    function applyFilterAndSort() {
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      let v = RAW;
+      if (q) {
+        v = RAW.filter((r) =>
+          COLUMNS.some((c) => {
+            const raw = c.get(r);
+            if (raw == null || raw === '') return false;
+            return String(raw).toLowerCase().includes(q);
+          })
+        );
+      }
+
+      const col = COLUMNS.find((c) => c.key === sortKey);
+      if (col) {
+        v = [...v].sort((a, b) => {
+          let av = col.get(a);
+          let bv = col.get(b);
+          if (col.type === 'number') {
+            av = Number(av) || 0; bv = Number(bv) || 0;
+            return sortDir === 'asc' ? av - bv : bv - av;
+          }
+          if (col.type === 'date') {
+            av = av ? new Date(av).getTime() : 0;
+            bv = bv ? new Date(bv).getTime() : 0;
+            return sortDir === 'asc' ? av - bv : bv - av;
+          }
+          av = (av || '').toString().toLowerCase();
+          bv = (bv || '').toString().toLowerCase();
+          if (av === bv) return 0;
+          if (sortDir === 'asc') return av < bv ? -1 : 1;
+          return av > bv ? -1 : 1;
+        });
+      }
+
+      VIEW = v;
+      renderRows();
+      renderSortIndicators();
+
+      const total = RAW.length;
+      const shown = VIEW.length;
+      document.getElementById('status').textContent =
+        q ? `Showing ${shown.toLocaleString()} of ${total.toLocaleString()} leads` : `${total.toLocaleString()} leads`;
+    }
+
+    function renderSortIndicators() {
+      COLUMNS.forEach((c, i) => {
+        const el = document.getElementById(`si-${i}`);
+        if (!el) return;
+        el.className = 'sort-indicator';
+        if (c.key === sortKey) el.classList.add(sortDir);
+      });
+    }
+
+    function renderRows() {
+      const tbody = document.getElementById('rows');
+      // For 4k+ rows, batch-render via DocumentFragment for speed.
+      const frag = document.createDocumentFragment();
+      const MAX = 1500; // hard cap on what we put in the DOM at once
+      const limit = Math.min(VIEW.length, MAX);
+      for (let i = 0; i < limit; i++) {
+        const r = VIEW[i];
+        const tr = document.createElement('tr');
+        tr.className = 'row cursor-pointer';
+        tr.innerHTML = COLUMNS.map((c) => {
+          const align = c.align === 'right' ? 'text-right' : '';
+          const inner = c.render(c.get(r), r);
+          return `<td class="${align} truncate-cell">${inner}</td>`;
+        }).join('');
+        tr.addEventListener('click', () => openPanel(r));
+        frag.appendChild(tr);
+      }
+      tbody.innerHTML = '';
+      tbody.appendChild(frag);
+      if (VIEW.length > MAX) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="${COLUMNS.length}" class="text-center py-3 text-xs text-[#5C574D] bg-[#F1EDE5]">
+          Showing first ${MAX.toLocaleString()} of ${VIEW.length.toLocaleString()} matching rows. Narrow your search to see more.
+        </td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ============================================================
+    // Side panel
+    // ============================================================
+    function openPanel(r) {
+      const title = r['Brand Name'] || r['CEO Name'] || r.id;
+      document.getElementById('panelTitle').textContent = title;
+      const body = document.getElementById('panelBody');
+      const entries = Object.entries(r).filter(([k]) => k !== 'id');
+      entries.sort(([a], [b]) => a.localeCompare(b));
+      body.innerHTML = `
+        <dl class="grid grid-cols-[140px_1fr] gap-x-4 gap-y-2.5">
+          <dt class="text-[11px] uppercase tracking-wider text-[#5C574D] pt-0.5">Record ID</dt>
+          <dd class="text-[#5C574D] font-mono text-xs">${escapeHTML(r.id)}</dd>
+          ${entries.map(([k, v]) => `
+            <dt class="text-[11px] uppercase tracking-wider text-[#5C574D] pt-0.5">${escapeHTML(k)}</dt>
+            <dd class="text-sm break-words">${renderValue(k, v)}</dd>
+          `).join('')}
+        </dl>
+      `;
+      document.getElementById('panel').classList.add('open');
+      document.getElementById('panel').setAttribute('aria-hidden', 'false');
+      document.getElementById('panelBackdrop').classList.add('open');
+    }
+
+    function closePanel() {
+      document.getElementById('panel').classList.remove('open');
+      document.getElementById('panel').setAttribute('aria-hidden', 'true');
+      document.getElementById('panelBackdrop').classList.remove('open');
+    }
+    document.getElementById('panelClose').addEventListener('click', closePanel);
+    document.getElementById('panelBackdrop').addEventListener('click', closePanel);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
+
+    function renderValue(key, v) {
+      if (v == null || v === '') return '<span class="text-[#A39B89]">&mdash;</span>';
+      if (typeof v === 'object' && v && typeof v.name === 'string') return pill(v.name);
+      if (Array.isArray(v)) return v.map((x) => renderValue(key, x)).join(' ');
+      if (typeof v === 'number') return `<span class="tnum">${formatNum(v)}</span>`;
+      const s = String(v);
+      if (/^https?:\/\//.test(s)) {
+        return `<a class="lnk" href="${escapeAttr(s)}" target="_blank" rel="noopener">${escapeHTML(s)}</a>`;
+      }
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) {
+        return `<a class="lnk" href="mailto:${escapeAttr(s)}">${escapeHTML(s)}</a>`;
+      }
+      // ISO date?
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+        return `<span class="tnum">${formatDate(s)}</span>`;
+      }
+      return escapeHTML(s);
+    }
+
+    // ============================================================
+    // Helpers
+    // ============================================================
+    function extractSelect(v) {
+      if (!v) return '';
+      if (typeof v === 'string') return v;
+      if (Array.isArray(v)) return v.map(extractSelect).filter(Boolean).join(', ');
+      if (typeof v === 'object' && typeof v.name === 'string') return v.name;
+      return '';
+    }
+    function pill(name) {
+      const key = (name || '').toString().toLowerCase().trim();
+      const c = PILL_COLORS[key] || { bg: '#E8E3D6', fg: '#5C574D' };
+      return `<span class="pill" style="background:${c.bg};color:${c.fg};">${escapeHTML(name)}</span>`;
+    }
+    function formatNum(n) {
+      n = Number(n);
+      if (!isFinite(n)) return '';
+      if (Math.abs(n) >= 1000) {
+        return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      }
+      return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+    function formatDate(s) {
+      try {
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return s;
+        return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+      } catch { return s; }
+    }
+    function escapeHTML(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    function escapeAttr(s) { return escapeHTML(s); }
+    function debounce(fn, ms) {
+      let t;
+      return function () {
+        clearTimeout(t);
+        const args = arguments;
+        t = setTimeout(() => fn.apply(null, args), ms);
+      };
+    }
+  </script>
+</body>
+</html>
