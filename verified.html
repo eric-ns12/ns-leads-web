@@ -89,6 +89,13 @@
       min-height: 64px;
     }
     textarea.notes:focus { outline: none; border-color: #B8AE99; }
+    .notes-log {
+      white-space: pre-wrap; font-size: 12.5px; color: #5C574D;
+      background: #FBF8F1; border: 1px solid #E5DECF; border-radius: 8px;
+      padding: 8px 10px; margin-top: 12px; max-height: 160px; overflow-y: auto;
+    }
+    textarea.note-add { margin-top: 8px; min-height: 46px; }
+    textarea.note-add.note-saving { opacity: .5; }
     .check {
       display: inline-flex; align-items: center; justify-content: center;
       width: 18px; height: 18px; border-radius: 4px;
@@ -202,6 +209,50 @@
     let VIEW = [];
 
     init();
+
+    document.getElementById('cards').addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-include-toggle]');
+      if (!t) return;
+      const id = t.dataset.id;
+      const next = t.dataset.on !== '1';
+      t.dataset.on = next ? '1' : '0';
+      t.classList.toggle('on', next);
+      t.innerHTML = next ? '&#10003;' : '';
+      const rec = RAW.find((r) => r.id === id);
+      if (rec) rec['Include'] = next;
+      try {
+        await saveField(id, { set: { fieldId: 'fldAcAzSUDvpwYnTH', value: next } });
+      } catch {
+        t.dataset.on = next ? '0' : '1'; t.classList.toggle('on', !next);
+        t.innerHTML = next ? '' : '&#10003;'; if (rec) rec['Include'] = !next;
+        alert('Save failed — Include not updated'); return;
+      }
+      if (INCLUDE_ONLY && !next) applyFilter();
+    });
+    document.getElementById('cards').addEventListener('focusout', async (e) => {
+      const ta = e.target.closest('textarea[data-note-add]');
+      if (!ta) return;
+      const text = ta.value.trim();
+      if (!text) return;
+      const id = ta.dataset.id;
+      ta.classList.add('note-saving'); ta.readOnly = true;
+      try {
+        const res = await saveField(id, { appendNote: text });
+        const rec = RAW.find((r) => r.id === id);
+        if (rec) rec['IMN Notes'] = res.notes;
+        const wrap = ta.closest('.notes-wrap');
+        let log = wrap.querySelector('.notes-log');
+        if (!log) { log = document.createElement('div'); log.className = 'notes-log'; wrap.insertBefore(log, ta); }
+        log.textContent = res.notes;
+        ta.value = '';
+      } catch { alert('Save failed — note not saved'); }
+      ta.classList.remove('note-saving'); ta.readOnly = false;
+    });
+    async function saveField(recordId, payload) {
+      const r = await fetch('/api/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recordId, ...payload }) });
+      if (!r.ok) throw new Error('save failed ' + r.status);
+      return r.json();
+    }
 
     async function init() {
       const cfg = window.PAGE_CONFIG;
@@ -374,9 +425,7 @@
       }
 
       const include = !!r['Include'];
-      const includeHTML = include
-        ? `<span class="check on" title="Included">&#10003;</span>`
-        : `<span class="check" title="Not included"></span>`;
+      const includeHTML = `<span class="check${include ? ' on' : ''}" data-include-toggle data-id="${escapeAttr(r.id)}" data-on="${include ? '1' : '0'}" role="button" title="Click to toggle Include" style="cursor:pointer;">${include ? '&#10003;' : ''}</span>`;
 
       const bigBoxStatus = extractSelect(r['Big Box Status']);
       const bigBoxRetailers = r['Found in Retailers'] || '';
@@ -466,7 +515,10 @@
             <div class="val">${includeHTML}</div>
           </div>
         </div>
-        <textarea class="notes" placeholder="Add notes about this lead..." readonly>${escapeHTML(notes)}</textarea>
+        <div class="notes-wrap">
+          ${notes ? `<div class="notes-log">${escapeHTML(notes)}</div>` : ''}
+          <textarea class="notes note-add" data-note-add data-id="${escapeAttr(r.id)}" placeholder="Add a note, then click away to save…"></textarea>
+        </div>
       `;
     }
 
