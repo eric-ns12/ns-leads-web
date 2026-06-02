@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       if (!text) return res.status(400).json({ error: 'empty note' });
       const g = await fetch(`${recUrl}?returnFieldsByFieldId=true`, { headers });
       if (!g.ok) return res.status(502).json({ error: 'read failed', status: g.status });
-      const cur = ((await g.json()).fields || {})[TABLE_FIELDS.notes] || '';
+      const cur = (((await g.json()).fields || {})[TABLE_FIELDS.notes] || '').trim();
       const stamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
       const entry = `[${stamp}] ${text}`;
       const next = cur ? `${entry}\n\n${cur}` : entry;

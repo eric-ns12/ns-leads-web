@@ -449,7 +449,7 @@
         : '';
       const dash = '<span class="text-[#A39B89]">&mdash;</span>';
 
-      const notes = r['IMN Notes'] || '';
+      const notes = (r['IMN Notes'] || '').trim();
 
       return `
         <div class="flex items-start justify-between gap-3 mb-2">
