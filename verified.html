@@ -279,15 +279,24 @@
       const searchUrl = r['Search Creatine'] || '';
 
       const hasCreatineRaw = r['Has Creatine'];
+      const CREATINE_FORMAT_COLORS = {
+        powder: COLOR_MAP.yellow, gummies: COLOR_MAP.green, chews: COLOR_MAP.red,
+        chewables: COLOR_MAP.blue, capsules: COLOR_MAP.purple,
+        no: COLOR_MAP.gray, unknown: COLOR_MAP.gray,
+      };
+      const colorForName = (n) =>
+        CREATINE_FORMAT_COLORS[String(n || '').toLowerCase()] || COLOR_MAP.gray;
       let creatineHTML = '<span class="text-[#A39B89]">&mdash;</span>';
       if (Array.isArray(hasCreatineRaw) && hasCreatineRaw.length) {
         creatineHTML = hasCreatineRaw.map((opt) => {
-          const c = airtableColorToPill(opt && opt.color);
-          const name = (opt && opt.name) || '';
+          const name = (typeof opt === 'string') ? opt : (opt && opt.name) || '';
+          const c = (typeof opt === 'string')
+            ? colorForName(name)
+            : airtableColorToPill(opt && opt.color);
           return `<span class="pill" style="background:${c.bg};color:${c.fg};">${escapeHTML(name)}</span>`;
         }).join(' ');
       } else if (typeof hasCreatineRaw === 'string' && hasCreatineRaw) {
-        const c = COLOR_MAP.gray;
+        const c = colorForName(hasCreatineRaw);
         creatineHTML = `<span class="pill" style="background:${c.bg};color:${c.fg};">${escapeHTML(hasCreatineRaw)}</span>`;
       }
 
