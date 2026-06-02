@@ -253,7 +253,7 @@
     function searchHay(r) {
       const ig = r['CEO Instagram'] || (r['CEO IG'] && (r['CEO IG'].url || r['CEO IG'].label)) || '';
       return [
-        r['Brand Name'], r['Website'], r['CEO Name'], ig,
+        r['Brand Name'], r['Website'], r['Contact Name'], r['CEO Name'], ig,
         creatineNames(r).join(' '),
         extractSelect(r['Big Box Status']), r['Found in Retailers'],
         extractSelect(r['Pipeline Status']), extractSelect(r['Brand Status']),
@@ -343,7 +343,7 @@
         ? `<span class="pill" style="background:${statusC.bg};color:${statusC.fg};">${escapeHTML(status)}</span>`
         : '';
 
-      const ceo = r['CEO Name'] || '';
+      const ceo = r['Contact Name'] || r['CEO Name'] || '';
       const igRaw = r['CEO Instagram'] || r['CEO IG'] || '';
       const ig = (igRaw && typeof igRaw === 'object') ? (igRaw.url || '') : igRaw;
       const igHandle = ig ? formatIgHandle(ig) : '';
