@@ -4,6 +4,13 @@ Live: https://ns-leads.vercel.app
 Repo: github.com/we-build-yours/ns-leads-web (auto-deploy via Vercel)
 Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
 
+## ✅ Done (2026-06-02, session 5)
+- **Write-back added** (`api/update.js`, field-ID + whitelisted): editable from the web app.
+  - **Notes**: each save **prepends** `[YYYY-MM-DD] <text>` to `IMN Notes` (append-only, no overwrite).
+    Card shows read-only history log + an "add a note" box. Verified E2E.
+  - **Include**: clickable checkbox, saves instantly; unchecking drops the brand from the Include-gated view.
+  - Note: Airtable stores empty multilineText as `"\n"` — display + append both `.trim()` to ignore blanks.
+
 ## 🔥 Active
 - **Hand-fill `Retail Doors (est)` for the 36 blank retail brands** (have shelf presence, no public total).
   Known internals to add: Arrae ~4,000. Others: MaryRuth's, Naked, ONNIT, Pink Stork, Kaged, RYSE, etc.
