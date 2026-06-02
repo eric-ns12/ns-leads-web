@@ -100,6 +100,12 @@
     .check.on {
       background: #2F8A4E; border-color: #2F8A4E; color: #FFFFFF;
     }
+    .fpill {
+      cursor: pointer; border: 1px solid #D9D2C4;
+      background: #FFFFFF; color: #5C574D; transition: all .12s;
+    }
+    .fpill:hover { border-color: #1B1A17; color: #1B1A17; }
+    .fpill.on { background: #1B1A17; color: #F1EDE5; border-color: #1B1A17; }
   </style>
 </head>
 <body>
@@ -128,6 +134,7 @@
   </header>
 
   <main class="max-w-[1280px] mx-auto px-6 py-6">
+    <div id="filters" class="flex items-center flex-wrap gap-2 mb-3"></div>
     <div id="status" class="text-sm text-[#5C574D] mb-4"></div>
     <div id="cards" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
   </main>
@@ -237,31 +244,78 @@
       }
     }
 
+    const ACTIVE_FORMATS = new Set();
+    let BIGBOX_ONLY = false;
+    let FILTERS_BUILT = false;
+
     document.getElementById('q').addEventListener('input', debounce(applyFilter, 150));
 
+    function creatineNames(r) {
+      const raw = r['Has Creatine'];
+      const out = [];
+      if (Array.isArray(raw)) raw.forEach((o) => out.push(typeof o === 'string' ? o : (o && o.name) || ''));
+      else if (typeof raw === 'string') out.push(raw);
+      return out.map((s) => String(s).toLowerCase().trim()).filter(Boolean);
+    }
+    function searchHay(r) {
+      const ig = r['CEO Instagram'] || (r['CEO IG'] && (r['CEO IG'].url || r['CEO IG'].label)) || '';
+      return [
+        r['Brand Name'], r['Website'], r['CEO Name'], ig,
+        creatineNames(r).join(' '),
+        extractSelect(r['Big Box Status']), r['Found in Retailers'],
+        extractSelect(r['Pipeline Status']), extractSelect(r['Brand Status']),
+      ].filter(Boolean).join(' ').toLowerCase();
+    }
+    function buildFilters() {
+      if (FILTERS_BUILT) return;
+      const el = document.getElementById('filters');
+      if (!el) return;
+      const ORDER = ['powder', 'gummies', 'chewables', 'chews', 'capsules'];
+      const present = new Set();
+      RAW.forEach((r) => creatineNames(r).forEach((n) => present.add(n)));
+      const fmts = ORDER.filter((f) => present.has(f));
+      const hasBigBox = RAW.some((r) => extractSelect(r['Big Box Status']));
+      const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+      let html = '<span class="text-[12px] font-medium text-[#5C574D] mr-1">Filter</span>';
+      fmts.forEach((f) => { html += `<span class="pill fpill" data-fmt="${f}">${cap(f)}</span>`; });
+      if (hasBigBox) html += '<span class="pill fpill" data-bb="1">Big Box</span>';
+      html += '<span class="fclear text-[12px] text-[#8C8473] underline cursor-pointer ml-1" style="display:none;">clear</span>';
+      el.innerHTML = html;
+      el.addEventListener('click', (e) => {
+        const t = e.target.closest('[data-fmt],[data-bb],.fclear');
+        if (!t) return;
+        if (t.classList.contains('fclear')) { ACTIVE_FORMATS.clear(); BIGBOX_ONLY = false; }
+        else if (t.dataset.bb) { BIGBOX_ONLY = !BIGBOX_ONLY; }
+        else { const f = t.dataset.fmt; ACTIVE_FORMATS.has(f) ? ACTIVE_FORMATS.delete(f) : ACTIVE_FORMATS.add(f); }
+        syncFilterPills();
+        applyFilter();
+      });
+      FILTERS_BUILT = true;
+    }
+    function syncFilterPills() {
+      const el = document.getElementById('filters');
+      if (!el) return;
+      el.querySelectorAll('[data-fmt]').forEach((p) => p.classList.toggle('on', ACTIVE_FORMATS.has(p.dataset.fmt)));
+      const bb = el.querySelector('[data-bb]'); if (bb) bb.classList.toggle('on', BIGBOX_ONLY);
+      const clr = el.querySelector('.fclear'); if (clr) clr.style.display = (ACTIVE_FORMATS.size || BIGBOX_ONLY) ? 'inline' : 'none';
+    }
+
     function applyFilter() {
+      buildFilters();
       const q = document.getElementById('q').value.trim().toLowerCase();
       let v = RAW;
-      if (q) {
-        v = RAW.filter((r) => {
-          const hay = [
-            r['Brand Name'],
-            r['CEO Name'],
-            r['Website'],
-            extractSelect(r['Pipeline Status']),
-            extractSelect(r['Brand Status']),
-          ].filter(Boolean).join(' ').toLowerCase();
-          return hay.includes(q);
-        });
-      }
+      if (q) v = v.filter((r) => searchHay(r).includes(q));
+      if (ACTIVE_FORMATS.size) v = v.filter((r) => creatineNames(r).some((n) => ACTIVE_FORMATS.has(n)));
+      if (BIGBOX_ONLY) v = v.filter((r) => String(extractSelect(r['Big Box Status'])).toLowerCase() === 'yes');
       VIEW = v;
       renderCards();
 
       const cfg = window.PAGE_CONFIG;
       const total = RAW.length;
       const shown = VIEW.length;
+      const filtered = q || ACTIVE_FORMATS.size || BIGBOX_ONLY;
       document.getElementById('status').textContent =
-        q
+        filtered
           ? `Showing ${shown.toLocaleString()} of ${total.toLocaleString()} ${cfg.countLabel}`
           : `${total.toLocaleString()} ${cfg.countLabel}`;
     }
