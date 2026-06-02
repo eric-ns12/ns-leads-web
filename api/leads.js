@@ -1,11 +1,50 @@
 // Vercel serverless function — GET /api/leads
-// Returns all records from the configured Airtable leads table.
-// Paginates the Airtable REST API until all rows are fetched.
+// Returns records from the Brands table. Paginates the Airtable REST API.
+//
+// RENAME-PROOF: we request fields by FIELD ID (returnFieldsByFieldId=true) and map
+// them back to friendly keys here. Renaming a field in Airtable never breaks this —
+// IDs are immutable. (Global rule: Airtable access = field IDs, never names.)
 //
 // Query params:
 //   ?view=<viewId>   override AIRTABLE_VIEW_ID env (per-page view selection)
+//   ?creatine=yes    server-side filter for brands with a real creatine format
 
 export const config = { api: { bodyParser: false } };
+
+// friendly key -> immutable field ID (Brands table tblfNOtY2VthbPanL)
+const F = {
+  'Brand Name': 'fldFETCuCe9BwWFW4',
+  'Brand Type': 'fldTvmjerHUWAZCFE',
+  'Website': 'fldqmTOMCp76xNFy1',
+  'Contact Name': 'fldP8NkVdkA5F05SM',
+  'Contact Email': 'fldv6J00KJNCHArV3',
+  'CEO Personal Email': 'fld6LWfbRaXzy2eUW',
+  'CEO Work Email': 'fldqIgdCylMZBXmfv',
+  'CEO Phone': 'fldzzjS5ZKftnnaxj',
+  'CEO Instagram': 'fldxSm1TFnwdImYuJ',
+  'CEO IG': 'fldvGJEjhdBpRNqee',
+  'Management_Email': 'fldJgMnZPwWRNZXk9',
+  'Management_Phone': 'fldPE5acalzMes6VL',
+  'Pipeline Status': 'fldS5UGbicNb5YPwx',
+  'Brand Status': 'fldYfLYo49ZvS2mQy',
+  'Lead Status': 'fldU3xEwMk2NQve8f',
+  'Stage': 'fldzK8dIzE53jMkpg',
+  'Source': 'flddAnWM3JvgCFq8m',
+  'Country': 'fldNEIm82p49EHJHk',
+  'Brand City': 'flde8ofp3NJvkey3i',
+  'Brand State': 'fldOnqZe4iZIkwefj',
+  'Search Creatine': 'fldZ6F9J6CzvKTlGz',
+  'Has Creatine': 'fldg8yX6El4OxL88d',
+  'Big Box Status': 'fldX7DwFlZAFEVM6l',
+  'Found in Retailers': 'fldDjS65i3ul0ZAby',
+  'Monthly Traffic': 'fldw7JG88BiCa1jga',
+  'Est Revenue (Model)': 'fld5aqZLNNT3EMik1',
+  'Priority Score': 'fldRjiYgdUHHYvX69',
+  'Retail Doors (est)': 'fldLmQuJrpWL3Nc77',
+  'Include': 'fldAcAzSUDvpwYnTH',
+  'IMN Notes': 'fldnBo5h14FyLK4dx',
+};
+const ID_TO_NAME = Object.fromEntries(Object.entries(F).map(([n, id]) => [id, n]));
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
@@ -17,56 +56,17 @@ export default async function handler(req, res) {
 
   const base = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
 
-  // Fields to surface in the UI. Pull a focused set to keep the payload reasonable.
-  // Anything not in this list is omitted from the response.
-  const fields = [
-    'Brand Name',
-    'Brand Type',
-    'Website',
-    'Contact Name',
-    'Contact Email',
-    'CEO Personal Email',
-    'CEO Work Email',
-    'CEO Phone',
-    'CEO Instagram',
-    'CEO IG',
-    'Management_Email',
-    'Management_Phone',
-    'Pipeline Status',
-    'Brand Status',
-    'Lead Status',
-    'Stage',
-    'Source',
-    'Country',
-    'Brand City',
-    'Brand State',
-    'Search Creatine',
-    'Has Creatine',
-    'Big Box Status',
-    'Found in Retailers',
-    'Monthly Traffic',
-    'Est Revenue (Model)',
-    'Priority Score',
-    'Include',
-    'IMN Notes',
-    '[Total] Est. Monthly Revenue',
-    'Total 30 Days',
-    'Date Added',
-    'Last Modified',
-  ];
-
   const params = new URLSearchParams();
-  fields.forEach((f) => params.append('fields[]', f));
+  Object.values(F).forEach((id) => params.append('fields[]', id));
+  params.set('returnFieldsByFieldId', 'true');
   params.set('pageSize', '100');
 
   // Two modes:
-  //   ?creatine=yes  → use a server-side formula filter for brands where Has Creatine
-  //                    has any value other than "No" and isn't empty.
-  //   else           → use ?view= query, then env, then default view.
+  //   ?creatine=yes  → server-side formula filter for brands with a real creatine format.
+  //                    NOTE: filterByFormula only supports field *names*, not IDs, so the
+  //                    one unavoidable name reference lives here ({Has Creatine}).
+  //   else           → ?view= query, then env, then default view (view IDs are immutable).
   if (req.query && req.query.creatine === 'yes') {
-    // FIND returns position (1+) if substring present, else 0. ARRAYJOIN flattens
-    // multipleSelects to a comma-separated string of names. Logic:
-    //   Has Creatine is NOT empty AND it contains some format other than just "No".
     const formula = `AND({Has Creatine} != BLANK(), OR(FIND("Powder", ARRAYJOIN({Has Creatine})) > 0, FIND("Gummies", ARRAYJOIN({Has Creatine})) > 0, FIND("Chews", ARRAYJOIN({Has Creatine})) > 0, FIND("Chewables", ARRAYJOIN({Has Creatine})) > 0, FIND("Capsules", ARRAYJOIN({Has Creatine})) > 0))`;
     params.set('filterByFormula', formula);
   } else {
@@ -99,13 +99,16 @@ export default async function handler(req, res) {
 
       const data = await r.json();
       for (const rec of data.records || []) {
-        all.push({ id: rec.id, ...rec.fields });
+        // rec.fields is keyed by field ID → remap to friendly names for the UI.
+        const out = { id: rec.id };
+        for (const [fid, val] of Object.entries(rec.fields || {})) {
+          out[ID_TO_NAME[fid] || fid] = val;
+        }
+        all.push(out);
       }
       offset = data.offset || null;
       pages += 1;
-
-      // Hard cap to avoid runaway.
-      if (pages > 80) break;
+      if (pages > 80) break; // hard cap
     } while (offset);
 
     return res.status(200).json({ count: all.length, pages, leads: all });
