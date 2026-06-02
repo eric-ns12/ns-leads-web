@@ -5,7 +5,25 @@ Repo: github.com/we-build-yours/ns-leads-web (auto-deploy via Vercel)
 Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
 
 ## 🔥 Active
-- (none) — big-box pass complete.
+- (none) — big-box + prioritization passes complete.
+
+## ✅ Done (2026-06-02, session 2)
+- **Priority Score** (`fldRjiYgdUHHYvX69`, number 0-100) created + written for all 69.
+  Formula: `50%*log(EstRevenue) + 30%*BigBox + 20%*log(Traffic)`. Computed client-friendly,
+  written as static numbers. Top: Bloom 99, Naked 99, 1st Phorm 97, Metagenics/Just Ingredients/RYSE/Jocko/Momentous 95.
+- **Web traffic** filled for all 69 (`Monthly Traffic` fldw7JG88BiCa1jga): kept the ~40 existing
+  (better source), filled ~29 gaps via hypestat (+ a few fresh SimilarWeb).
+- Web app: Priority Score badge (header), Est Rev + Traffic rows on all 3 pages; **cards sorted by score desc**.
+- Clickable format filter pills + Big Box toggle + broadened search (name/site/CEO/IG/format/retailers).
+- IG `[object Object]`/`@DM` display bug fixed (button-field {label,url} → url only).
+- Firecrawl: re-scoped to USER with live key `...792b`; stale home-dir `...1c73` removed.
+
+## ⚠️ Traffic-scraping learnings (important)
+- **SimilarWeb CAPTCHAs after ~15 stealth hits** (HTTP 405 stub page, ~594 chars). Each stealth scrape = 5 credits;
+  a retry loop on the stub BURNED credits fast (1000→140 in one run). DO NOT brute-force SimilarWeb.
+- **hypestat.com works: no stealth, 1 credit, no CAPTCHA.** Parse "receives approximately X visitors per day" ×30.
+  Rougher than SimilarWeb (Bloom: hypestat ~351K vs real ~1.8M) — use only to fill gaps, prefer existing base values.
+- Firecrawl credits remaining ≈110 (key `...792b`, resets ~2026-06-16). Budget carefully.
 
 ## ⏸️ Blocked / waiting
 - **Delete leftover field `ZZ Scope Test A` (`fldx387IIrusWEZ2M`) in Brands** — created during a

@@ -12,3 +12,7 @@ node_modules
 .scrape*
 .parse.cjs
 .digest*.txt
+.traffic*
+.score.cjs
+.scores.json
+.upd*.json
