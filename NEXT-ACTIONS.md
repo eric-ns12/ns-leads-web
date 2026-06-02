@@ -7,6 +7,17 @@ Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
 ## 🔥 Active
 - (none) — big-box + prioritization passes complete.
 
+## ✅ Done (2026-06-02, session 3)
+- **Est Revenue rebuilt** — old `[Total] Est. Monthly Revenue` was just `Amazon + Shopify-est`, and the
+  Shopify-est was ~blank for DTC brands → Transparent Labs showed $875K (Amazon only) for a $10-15M brand.
+- New field **`Est Revenue (Model)`** (`fld5aqZLNNT3EMik1`, formula):
+  `{Monthly Traffic} * 0.03 * 70 + {[Amazon] Monthly Revenue}` = traffic × 3% conv × $70 AOV + Amazon.
+  Tune the `0.03` and `70` in the formula. Does NOT include retail or subscription upside.
+  → Transparent Labs $3.5M, MaryRuth's $3.6M, Naked $12.3M, Bloom $7.3M.
+- Old `[Total] Est. Monthly Revenue` left intact (still used by broader base / 2387 records).
+- Priority Score recomputed off the new revenue; web app `Est Rev` now reads `Est Revenue (Model)`.
+- Conversion-rate reference: supplements/health DTC ~3-4% (general ecom ~2.5-3%).
+
 ## ✅ Done (2026-06-02, session 2)
 - **Priority Score** (`fldRjiYgdUHHYvX69`, number 0-100) created + written for all 69.
   Formula: `50%*log(EstRevenue) + 30%*BigBox + 20%*log(Traffic)`. Computed client-friendly,
