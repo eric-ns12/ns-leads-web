@@ -7,3 +7,8 @@ node_modules
 *.log
 
 .vercel
+
+# temp scrape artifacts
+.scrape*
+.parse.cjs
+.digest*.txt

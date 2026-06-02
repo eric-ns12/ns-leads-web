@@ -42,6 +42,8 @@ export default async function handler(req, res) {
     'Brand State',
     'Search Creatine',
     'Has Creatine',
+    'Big Box Status',
+    'Found in Retailers',
     'Include',
     'IMN Notes',
     '[Total] Est. Monthly Revenue',

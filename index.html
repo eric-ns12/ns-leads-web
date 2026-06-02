@@ -189,6 +189,7 @@
       search:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
       creatine:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10v4l-2 2v8a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4V9l2-2V3z"/><path d="M7 12h10"/></svg>',
       include:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12l3 3 5-6"/></svg>',
+      bigbox:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.6-5h14.8L21 9"/><path d="M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9z"/><path d="M9 13h6"/></svg>',
     };
 
     let RAW = [];
@@ -324,6 +325,15 @@
         ? `<span class="check on" title="Included">&#10003;</span>`
         : `<span class="check" title="Not included"></span>`;
 
+      const bigBoxStatus = extractSelect(r['Big Box Status']);
+      const bigBoxRetailers = r['Found in Retailers'] || '';
+      let bigBoxHTML = '<span class="text-[#A39B89]">&mdash;</span>';
+      if (bigBoxStatus) {
+        const bbc = bigBoxStatus.toLowerCase() === 'yes' ? COLOR_MAP.green : COLOR_MAP.gray;
+        bigBoxHTML = `<span class="pill" style="background:${bbc.bg};color:${bbc.fg};">${escapeHTML(bigBoxStatus)}</span>`
+          + (bigBoxRetailers ? ` <span class="text-[#5C574D]">${escapeHTML(bigBoxRetailers)}</span>` : '');
+      }
+
       const notes = r['IMN Notes'] || '';
 
       return `
@@ -373,6 +383,11 @@
             ${ICONS.include}
             <div class="lbl">Include</div>
             <div class="val">${includeHTML}</div>
+          </div>
+          <div class="row-line">
+            ${ICONS.bigbox}
+            <div class="lbl">Big Box</div>
+            <div class="val" style="white-space:normal;">${bigBoxHTML}</div>
           </div>
         </div>
         <textarea class="notes" placeholder="Add notes about this lead..." readonly>${escapeHTML(notes)}</textarea>
