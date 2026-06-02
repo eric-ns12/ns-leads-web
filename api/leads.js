@@ -53,12 +53,24 @@ export default async function handler(req, res) {
   const params = new URLSearchParams();
   fields.forEach((f) => params.append('fields[]', f));
   params.set('pageSize', '100');
-  // Per-page view override via query string, else env, else hard default.
-  const viewId =
-    (req.query && req.query.view) ||
-    process.env.AIRTABLE_VIEW_ID ||
-    'viwAoPiES9KMD3IVG';
-  params.set('view', viewId);
+
+  // Two modes:
+  //   ?creatine=yes  → use a server-side formula filter for brands where Has Creatine
+  //                    has any value other than "No" and isn't empty.
+  //   else           → use ?view= query, then env, then default view.
+  if (req.query && req.query.creatine === 'yes') {
+    // FIND returns position (1+) if substring present, else 0. ARRAYJOIN flattens
+    // multipleSelects to a comma-separated string of names. Logic:
+    //   Has Creatine is NOT empty AND it contains some format other than just "No".
+    const formula = `AND({Has Creatine} != BLANK(), OR(FIND("Powder", ARRAYJOIN({Has Creatine})) > 0, FIND("Gummies", ARRAYJOIN({Has Creatine})) > 0, FIND("Chews", ARRAYJOIN({Has Creatine})) > 0, FIND("Chewables", ARRAYJOIN({Has Creatine})) > 0, FIND("Capsules", ARRAYJOIN({Has Creatine})) > 0))`;
+    params.set('filterByFormula', formula);
+  } else {
+    const viewId =
+      (req.query && req.query.view) ||
+      process.env.AIRTABLE_VIEW_ID ||
+      'viwAoPiES9KMD3IVG';
+    params.set('view', viewId);
+  }
 
   const all = [];
   let offset = null;
@@ -91,7 +103,7 @@ export default async function handler(req, res) {
       if (pages > 80) break;
     } while (offset);
 
-    return res.status(200).json({ count: all.length, pages, view: viewId, leads: all });
+    return res.status(200).json({ count: all.length, pages, leads: all });
   } catch (err) {
     console.error('Fetch error:', err);
     return res.status(500).json({ error: 'Network error reaching Airtable' });

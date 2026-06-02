@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NS Leads — Verified Brands</title>
+  <title>NS Leads — All Creatine Brands</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -107,8 +107,8 @@
     <div class="max-w-[1280px] mx-auto px-6 pt-6 pb-4">
       <div class="flex items-baseline justify-between gap-6 flex-wrap">
         <div>
-          <h1 id="pageTitle" class="text-2xl font-semibold tracking-tight">Verified Brands</h1>
-          <p id="pageSubtitle" class="text-[11px] uppercase tracking-[0.12em] text-[#5C574D] mt-1">CLIENT VERIFY NEEDED</p>
+          <h1 id="pageTitle" class="text-2xl font-semibold tracking-tight">All Creatine Brands</h1>
+          <p id="pageSubtitle" class="text-[11px] uppercase tracking-[0.12em] text-[#5C574D] mt-1">DETECTED FROM SHOPIFY · ENTIRE BASE</p>
           <p id="meta" class="text-xs text-[#5C574D] mt-1">Loading&hellip;</p>
         </div>
         <input
@@ -121,8 +121,8 @@
       </div>
       <nav id="nav" class="flex items-center gap-2 mt-4">
         <a class="nav-link" href="/">Has Creatine <span id="navCountHas" class="text-[#A39B89]">(&hellip;)</span></a>
-        <a class="nav-link active" href="/verified.html">Verified <span id="navCountVer" class="text-[#A39B89]">(&hellip;)</span></a>
-        <a class="nav-link" href="/creatine.html">All Creatine <span id="navCountCre" class="text-[#A39B89]">(&hellip;)</span></a>
+        <a class="nav-link" href="/verified.html">Verified <span id="navCountVer" class="text-[#A39B89]">(&hellip;)</span></a>
+        <a class="nav-link active" href="/creatine.html">All Creatine <span id="navCountCre" class="text-[#A39B89]">(&hellip;)</span></a>
       </nav>
     </div>
   </header>
@@ -134,8 +134,8 @@
 
   <script>
     window.PAGE_CONFIG = {
-      viewId: 'viwAoPiES9KMD3IVG',
-      countLabel: 'brands',
+      apiQuery: '?creatine=yes',
+      countLabel: 'brands with creatine',
     };
 
     const COLOR_MAP = {
@@ -188,7 +188,10 @@
     async function init() {
       const cfg = window.PAGE_CONFIG;
       try {
-        const r = await fetch(`/api/leads?view=${encodeURIComponent(cfg.viewId)}`);
+        const apiUrl = cfg.apiQuery
+          ? `/api/leads${cfg.apiQuery}`
+          : `/api/leads?view=${encodeURIComponent(cfg.viewId)}`;
+        const r = await fetch(apiUrl);
         if (!r.ok) {
           const t = await r.text();
           throw new Error(`HTTP ${r.status}: ${t.slice(0, 200)}`);
@@ -207,15 +210,14 @@
     }
 
     async function hydrateNavCounts() {
-      const HAS = 'viwXYjVkt7keSAOKU';
-      const VER = 'viwAoPiES9KMD3IVG';
-      const cur = window.PAGE_CONFIG.viewId;
-      if (cur === VER) {
-        document.getElementById('navCountVer').textContent = `(${RAW.length})`;
-        fetch(`/api/leads?view=${HAS}`).then(r => r.json()).then(d => {
-          document.getElementById('navCountHas').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
-        }).catch(() => {});
-      }
+      // On creatine page — own count is RAW.length, fetch the other two.
+      document.getElementById('navCountCre').textContent = `(${RAW.length})`;
+      fetch(`/api/leads?view=viwXYjVkt7keSAOKU`).then(r => r.json()).then(d => {
+        document.getElementById('navCountHas').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
+      }).catch(() => {});
+      fetch(`/api/leads?view=viwAoPiES9KMD3IVG`).then(r => r.json()).then(d => {
+        document.getElementById('navCountVer').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
+      }).catch(() => {});
     }
 
     document.getElementById('q').addEventListener('input', debounce(applyFilter, 150));
