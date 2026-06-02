@@ -5,7 +5,16 @@ Repo: github.com/we-build-yours/ns-leads-web (auto-deploy via Vercel)
 Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
 
 ## 🔥 Active
-- (none) — big-box + prioritization passes complete.
+- **Hand-fill `Retail Doors (est)` for the 36 blank retail brands** (have shelf presence, no public total).
+  Known internals to add: Arrae ~4,000. Others: MaryRuth's, Naked, ONNIT, Pink Stork, Kaged, RYSE, etc.
+
+## ✅ Done (2026-06-02, session 4)
+- **`Retail Doors (est)`** field (`fldLmQuJrpWL3Nc77`) added. Free WebSearch pass (5 agents) over the 47
+  Big-Box brands. 11 had credible published totals: KOS 23k, RSP 15k, Bloom 14.7k, EHP 4k, Gorilla Mind 2.5k,
+  Organifi 2k, Gainful 1.8k, REDCON1 1.8k, JiMMYBAR 1.5k(partial), Better Alt 1.1k, Momentous 640.
+  22 non-retail (Big Box=No) set to 0. 36 retail brands left blank (no public total → hand-fill).
+- Decision: NOT surfaced on web yet, NOT folded into revenue (too sparse). Per-door velocity insight:
+  Arrae 4,000 doors ≈ $10M/mo ≈ $2,500/door/mo — revisit doors→revenue once more counts are filled.
 
 ## ✅ Done (2026-06-02, session 3)
 - **Est Revenue rebuilt** — old `[Total] Est. Monthly Revenue` was just `Amazon + Shopify-est`, and the
