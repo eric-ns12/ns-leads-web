@@ -327,7 +327,8 @@
         : '';
 
       const ceo = r['CEO Name'] || '';
-      const ig = r['CEO Instagram'] || r['CEO IG'] || '';
+      const igRaw = r['CEO Instagram'] || r['CEO IG'] || '';
+      const ig = (igRaw && typeof igRaw === 'object') ? (igRaw.url || igRaw.label || '') : igRaw;
       const igHandle = ig ? formatIgHandle(ig) : '';
       const igUrl = ig ? formatIgUrl(ig) : '';
       const website = r['Website'] || '';
