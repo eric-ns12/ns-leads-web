@@ -238,6 +238,7 @@
 
     const ACTIVE_FORMATS = new Set();
     let BIGBOX_ONLY = false;
+    let INCLUDE_ONLY = !!(window.PAGE_CONFIG && window.PAGE_CONFIG.includeOnlyDefault);
     let FILTERS_BUILT = false;
 
     document.getElementById('q').addEventListener('input', debounce(applyFilter, 150));
@@ -271,17 +272,20 @@
       let html = '<span class="text-[12px] font-medium text-[#5C574D] mr-1">Filter</span>';
       fmts.forEach((f) => { html += `<span class="pill fpill" data-fmt="${f}">${cap(f)}</span>`; });
       if (hasBigBox) html += '<span class="pill fpill" data-bb="1">Big Box</span>';
+      html += '<span class="pill fpill" data-inc="1">Included</span>';
       html += '<span class="fclear text-[12px] text-[#8C8473] underline cursor-pointer ml-1" style="display:none;">clear</span>';
       el.innerHTML = html;
       el.addEventListener('click', (e) => {
-        const t = e.target.closest('[data-fmt],[data-bb],.fclear');
+        const t = e.target.closest('[data-fmt],[data-bb],[data-inc],.fclear');
         if (!t) return;
-        if (t.classList.contains('fclear')) { ACTIVE_FORMATS.clear(); BIGBOX_ONLY = false; }
+        if (t.classList.contains('fclear')) { ACTIVE_FORMATS.clear(); BIGBOX_ONLY = false; INCLUDE_ONLY = false; }
         else if (t.dataset.bb) { BIGBOX_ONLY = !BIGBOX_ONLY; }
+        else if (t.dataset.inc) { INCLUDE_ONLY = !INCLUDE_ONLY; }
         else { const f = t.dataset.fmt; ACTIVE_FORMATS.has(f) ? ACTIVE_FORMATS.delete(f) : ACTIVE_FORMATS.add(f); }
         syncFilterPills();
         applyFilter();
       });
+      syncFilterPills();
       FILTERS_BUILT = true;
     }
     function syncFilterPills() {
@@ -289,7 +293,8 @@
       if (!el) return;
       el.querySelectorAll('[data-fmt]').forEach((p) => p.classList.toggle('on', ACTIVE_FORMATS.has(p.dataset.fmt)));
       const bb = el.querySelector('[data-bb]'); if (bb) bb.classList.toggle('on', BIGBOX_ONLY);
-      const clr = el.querySelector('.fclear'); if (clr) clr.style.display = (ACTIVE_FORMATS.size || BIGBOX_ONLY) ? 'inline' : 'none';
+      const inc = el.querySelector('[data-inc]'); if (inc) inc.classList.toggle('on', INCLUDE_ONLY);
+      const clr = el.querySelector('.fclear'); if (clr) clr.style.display = (ACTIVE_FORMATS.size || BIGBOX_ONLY || INCLUDE_ONLY) ? 'inline' : 'none';
     }
 
     function applyFilter() {
@@ -299,6 +304,7 @@
       if (q) v = v.filter((r) => searchHay(r).includes(q));
       if (ACTIVE_FORMATS.size) v = v.filter((r) => creatineNames(r).some((n) => ACTIVE_FORMATS.has(n)));
       if (BIGBOX_ONLY) v = v.filter((r) => String(extractSelect(r['Big Box Status'])).toLowerCase() === 'yes');
+      if (INCLUDE_ONLY) v = v.filter((r) => r['Include'] === true);
       v = v.slice().sort((a, b) => ((Number(b['Priority Score']) || -1) - (Number(a['Priority Score']) || -1)));
       VIEW = v;
       renderCards();
@@ -440,11 +446,6 @@
             <div class="val">${creatineHTML}</div>
           </div>
           <div class="row-line">
-            ${ICONS.include}
-            <div class="lbl">Include</div>
-            <div class="val">${includeHTML}</div>
-          </div>
-          <div class="row-line">
             ${ICONS.bigbox}
             <div class="lbl">Big Box</div>
             <div class="val" style="white-space:normal;">${bigBoxHTML}</div>
@@ -458,6 +459,11 @@
             ${ICONS.traffic}
             <div class="lbl">Traffic</div>
             <div class="val">${traffic ? fmtNum(traffic) + '<span class="text-[#A39B89]"> visits/mo</span>' : dash}</div>
+          </div>
+          <div class="row-line">
+            ${ICONS.include}
+            <div class="lbl">Include</div>
+            <div class="val">${includeHTML}</div>
           </div>
         </div>
         <textarea class="notes" placeholder="Add notes about this lead..." readonly>${escapeHTML(notes)}</textarea>
