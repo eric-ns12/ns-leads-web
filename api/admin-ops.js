@@ -1,4 +1,8 @@
-// Temp diagnostic + ops endpoint. DELETE AFTER USE.
+// Temp endpoint — field schema ops on Brands table. DELETE AFTER USE.
+//
+// Status: PATCH returns 422 — likely PAT missing `schema.bases:write` scope.
+// To verify: regenerate PAT in Airtable Developer Hub with that scope added,
+// update on Vercel (Settings → Environment Variables → AIRTABLE_PAT), redeploy.
 
 export default async function handler(req, res) {
   const { AIRTABLE_PAT, AIRTABLE_BASE_ID } = process.env;
@@ -8,19 +12,6 @@ export default async function handler(req, res) {
   const FIELD_HAS_CREATINE = 'fldg8yX6El4OxL88d';
   const out = {};
 
-  // 0. Diagnostic: token prefix/suffix + scopes via /meta/whoami
-  out.tokenPrefix = AIRTABLE_PAT.slice(0, 8);
-  out.tokenSuffix = AIRTABLE_PAT.slice(-8);
-  try {
-    const r = await fetch('https://api.airtable.com/v0/meta/whoami', {
-      headers: { Authorization: `Bearer ${AIRTABLE_PAT}` },
-    });
-    out.whoami = { status: r.status, body: (await r.text()).slice(0, 800) };
-  } catch (e) {
-    out.whoami = { error: String(e) };
-  }
-
-  // 1. Rename Unknown → Unreachable (requires schema.bases:write)
   const choices = [
     { id: 'selWfg3SvQ6hIE41H', name: 'Powder' },
     { id: 'selmrefyf6lVzM5Nz', name: 'Gummies' },
@@ -39,7 +30,6 @@ export default async function handler(req, res) {
     out.fieldPatch = { status: r1.status, body: (await r1.text()).slice(0, 500) };
   } catch (e) { out.fieldPatch = { error: String(e) }; }
 
-  // 2. Create view (requires schema.bases:write)
   try {
     const r2 = await fetch(
       `https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE_ID}/tables/${TABLE}/views`,
