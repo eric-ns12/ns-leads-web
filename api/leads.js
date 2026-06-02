@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     'Big Box Status',
     'Found in Retailers',
     'Monthly Traffic',
-    '[Total] Est. Monthly Revenue',
+    'Est Revenue (Model)',
     'Priority Score',
     'Include',
     'IMN Notes',

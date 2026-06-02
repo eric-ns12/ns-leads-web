@@ -397,7 +397,7 @@
           + (bigBoxRetailers ? ` <span class="text-[#5C574D]">${escapeHTML(bigBoxRetailers)}</span>` : '');
       }
 
-      const revenue = Number(r['[Total] Est. Monthly Revenue']);
+      const revenue = Number(r['Est Revenue (Model)']);
       const traffic = Number(r['Monthly Traffic']);
       const scoreVal = r['Priority Score'];
       const scoreNum = (scoreVal === 0 || scoreVal) ? Number(scoreVal) : null;
