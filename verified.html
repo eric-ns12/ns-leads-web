@@ -490,7 +490,7 @@
           <div class="row-line">
             ${ICONS.ig}
             <div class="lbl">Followers</div>
-            <div class="val">${(Number(r['IG Followers'])||0) ? fmtNum(Number(r['IG Followers'])) + '<span class="text-[#A39B89]"> followers</span>' : dash}</div>
+            <div class="val">${(Number(r['CEO IG Followers'])||Number(r['IG Followers'])||0) ? fmtNum(Number(r['CEO IG Followers'])||Number(r['IG Followers'])) + '<span class="text-[#A39B89]"> followers</span>' : dash}</div>
           </div>
           <div class="row-line">
             ${ICONS.web}
