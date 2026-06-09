@@ -14,6 +14,15 @@ Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
     saves on blur via `api/update.js` (whitelisted). Distinct from append-only IMN Notes.
   - All 3 pages. Verified live in Chrome (counts render, no console errors).
   - **PAT** Vercel env refreshed from MASTER_CONFIG (matched active `…f7aae94d89b`).
+- **Sort** changed Priority Score → best-target: `log10(EstRevenue) − log10(followers)` (high rev + low
+  followers on top). No-follower-data brands sink to bottom (unknown ≠ low). Top: ONNIT, Naked, NativePath.
+- **Tab semantics reworked** (all query `?creatine=yes`, 70 base):
+  - **Has Creatine** (`/`, first tab) = all 70 creatine brands, active+inactive (no Include filter).
+  - **All Creatine** (`/creatine.html`, last tab) = **active only** (Include=true, ~65); Include checkbox =
+    active toggle, unchecking drops from this tab only.
+  - **Verified** (`/verified.html`) = its view (52), unchanged; not Include-gated.
+  - Unchecking Include removes a lead from All Creatine but it stays on Has Creatine + Verified. Nav counts
+    unified to (70)/(52)/(active) on every page.
 
 ## ✅ Done (2026-06-02, session 5)
 - **Write-back added** (`api/update.js`, field-ID + whitelisted): editable from the web app.
