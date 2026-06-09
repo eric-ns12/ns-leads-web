@@ -98,6 +98,10 @@
     textarea.note-add.note-saving { opacity: .5; }
     .admin-wrap { margin-top: 12px; }
     .admin-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #8C8473; margin-bottom: 5px; }
+    .admin-status { font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: none; }
+    .admin-status.saving { color: #8C8473; }
+    .admin-status.saved { color: #2F8A4E; }
+    .admin-status.failed { color: #5C1E1E; }
     .check {
       display: inline-flex; align-items: center; justify-content: center;
       width: 18px; height: 18px; border-radius: 4px;
@@ -264,12 +268,20 @@
       const id = ta.dataset.id;
       const val = ta.value;
       const rec = RAW.find((r) => r.id === id);
+      const status = document.querySelector(`[data-admin-status="${id}"]`);
       if (rec && String(rec['Admin Notes'] || '').trim() === val.trim()) return;
+      if (status) { status.textContent = 'Saving…'; status.className = 'admin-status saving'; }
       ta.classList.add('note-saving'); ta.readOnly = true;
       try {
         await saveField(id, { set: { fieldId: 'fldG9l6Gh6pIqqTfT', value: val } });
         if (rec) rec['Admin Notes'] = val;
-      } catch { alert('Save failed — admin note not saved'); }
+        if (status) {
+          status.textContent = 'Saved ✓'; status.className = 'admin-status saved';
+          setTimeout(() => { if (status.textContent === 'Saved ✓') { status.textContent = ''; status.className = 'admin-status'; } }, 2500);
+        }
+      } catch {
+        if (status) { status.textContent = 'Save failed — retry'; status.className = 'admin-status failed'; }
+      }
       ta.classList.remove('note-saving'); ta.readOnly = false;
     });
     async function saveField(recordId, payload) {
@@ -548,7 +560,7 @@
           <textarea class="notes note-add" data-note-add data-id="${escapeAttr(r.id)}" placeholder="Add a note, then click away to save…"></textarea>
         </div>
         <div class="admin-wrap">
-          <div class="admin-lbl">Admin Notes</div>
+          <div class="admin-lbl">Admin Notes <span class="admin-status" data-admin-status="${escapeAttr(r.id)}"></span></div>
           <textarea class="notes admin-note" data-admin-note data-id="${escapeAttr(r.id)}" placeholder="Admin notes — click away to save">${escapeHTML((r['Admin Notes']||'').trim())}</textarea>
         </div>
       `;

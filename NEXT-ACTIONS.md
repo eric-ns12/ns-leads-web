@@ -32,6 +32,11 @@ Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
   - Note: Airtable stores empty multilineText as `"\n"` — display + append both `.trim()` to ignore blanks.
 
 ## 🔥 Active
+- **Incorporate Admin Notes properly like the feedback widget** (per Eric). Current state: per-card Admin
+  Notes box saves on blur to `Admin Notes` (`fldG9l6Gh6pIqqTfT`) via `api/update.js` with a Saving/Saved
+  indicator — works but is bare. Goal: give it the canonical `feedback-widget` treatment (modal/inline UX,
+  reviewer + timestamp audit trail, sticky success copy, Airtable row semantics) instead of a raw overwrite
+  textarea. Invoke the `feedback-widget` skill when building. Deferred — not the quick blur-save above.
 - **Hand-fill `Retail Doors (est)` for the 36 blank retail brands** (have shelf presence, no public total).
   Known internals to add: Arrae ~4,000. Others: MaryRuth's, Naked, ONNIT, Pink Stork, Kaged, RYSE, etc.
 
