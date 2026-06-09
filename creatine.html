@@ -390,10 +390,11 @@
       const cfg = window.PAGE_CONFIG;
       const total = RAW.length;
       const shown = VIEW.length;
-      const filtered = q || ACTIVE_FORMATS.size || BIGBOX_ONLY;
+      const filtered = q || ACTIVE_FORMATS.size || BIGBOX_ONLY || INCLUDE_ONLY;
+      const activeNote = INCLUDE_ONLY ? ' · active only (uncheck Include to drop a lead)' : '';
       document.getElementById('status').textContent =
         filtered
-          ? `Showing ${shown.toLocaleString()} of ${total.toLocaleString()} ${cfg.countLabel}`
+          ? `Showing ${shown.toLocaleString()} of ${total.toLocaleString()} ${cfg.countLabel}${activeNote}`
           : `${total.toLocaleString()} ${cfg.countLabel}`;
     }
 
