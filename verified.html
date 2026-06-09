@@ -206,6 +206,13 @@
       if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
       return String(Math.round(n));
     }
+    function followersOf(r) { return Number(r['CEO IG Followers']) || Number(r['IG Followers']) || 0; }
+    // Best targets = HIGH revenue + LOW IG followers. Log-ratio: rewards revenue, penalizes followers.
+    function targetScore(r) {
+      const rev = Number(r['Est Revenue (Model)']) || 0;
+      const fol = followersOf(r);
+      return Math.log10(rev + 1) - Math.log10(fol + 1);
+    }
 
     let RAW = [];
     let VIEW = [];
@@ -372,7 +379,7 @@
       if (ACTIVE_FORMATS.size) v = v.filter((r) => creatineNames(r).some((n) => ACTIVE_FORMATS.has(n)));
       if (BIGBOX_ONLY) v = v.filter((r) => String(extractSelect(r['Big Box Status'])).toLowerCase() === 'yes');
       if (INCLUDE_ONLY) v = v.filter((r) => r['Include'] === true);
-      v = v.slice().sort((a, b) => ((Number(b['Priority Score']) || -1) - (Number(a['Priority Score']) || -1)));
+      v = v.slice().sort((a, b) => targetScore(b) - targetScore(a));
       VIEW = v;
       renderCards();
 
