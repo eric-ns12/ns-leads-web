@@ -211,6 +211,7 @@
     function targetScore(r) {
       const rev = Number(r['Est Revenue (Model)']) || 0;
       const fol = followersOf(r);
+      if (!fol) return -Infinity; // no follower data → can't call it "low" → sink to bottom
       return Math.log10(rev + 1) - Math.log10(fol + 1);
     }
 
