@@ -96,6 +96,8 @@
     }
     textarea.note-add { margin-top: 8px; min-height: 46px; }
     textarea.note-add.note-saving { opacity: .5; }
+    .admin-wrap { margin-top: 12px; }
+    .admin-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #8C8473; margin-bottom: 5px; }
     .check {
       display: inline-flex; align-items: center; justify-content: center;
       width: 18px; height: 18px; border-radius: 4px;
@@ -257,6 +259,20 @@
         log.textContent = res.notes;
         ta.value = '';
       } catch { alert('Save failed — note not saved'); }
+      ta.classList.remove('note-saving'); ta.readOnly = false;
+    });
+    document.getElementById('cards').addEventListener('focusout', async (e) => {
+      const ta = e.target.closest('textarea[data-admin-note]');
+      if (!ta) return;
+      const id = ta.dataset.id;
+      const val = ta.value;
+      const rec = RAW.find((r) => r.id === id);
+      if (rec && String(rec['Admin Notes'] || '').trim() === val.trim()) return;
+      ta.classList.add('note-saving'); ta.readOnly = true;
+      try {
+        await saveField(id, { set: { fieldId: 'fldG9l6Gh6pIqqTfT', value: val } });
+        if (rec) rec['Admin Notes'] = val;
+      } catch { alert('Save failed — admin note not saved'); }
       ta.classList.remove('note-saving'); ta.readOnly = false;
     });
     async function saveField(recordId, payload) {
@@ -491,6 +507,11 @@
             }</div>
           </div>
           <div class="row-line">
+            ${ICONS.ig}
+            <div class="lbl">Followers</div>
+            <div class="val">${(Number(r['IG Followers'])||0) ? fmtNum(Number(r['IG Followers'])) + '<span class="text-[#A39B89]"> followers</span>' : dash}</div>
+          </div>
+          <div class="row-line">
             ${ICONS.web}
             <div class="lbl">Website</div>
             <div class="val">${
@@ -537,6 +558,10 @@
         <div class="notes-wrap">
           ${notes ? `<div class="notes-log">${escapeHTML(notes)}</div>` : ''}
           <textarea class="notes note-add" data-note-add data-id="${escapeAttr(r.id)}" placeholder="Add a note, then click away to save…"></textarea>
+        </div>
+        <div class="admin-wrap">
+          <div class="admin-lbl">Admin Notes</div>
+          <textarea class="notes admin-note" data-admin-note data-id="${escapeAttr(r.id)}" placeholder="Admin notes — click away to save">${escapeHTML((r['Admin Notes']||'').trim())}</textarea>
         </div>
       `;
     }

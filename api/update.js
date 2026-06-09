@@ -7,10 +7,11 @@
 //   { recordId, appendNote: "text" }         → prepend "[YYYY-MM-DD] text" to IMN Notes (no overwrite)
 
 const TABLE_FIELDS = {
-  include: 'fldAcAzSUDvpwYnTH', // Include (checkbox)
-  notes: 'fldnBo5h14FyLK4dx',   // IMN Notes (multilineText)
+  include: 'fldAcAzSUDvpwYnTH',     // Include (checkbox)
+  notes: 'fldnBo5h14FyLK4dx',       // IMN Notes (multilineText, append-only)
+  adminNotes: 'fldG9l6Gh6pIqqTfT',  // Admin Notes (multilineText, editable overwrite)
 };
-const WRITABLE = new Set([TABLE_FIELDS.include, TABLE_FIELDS.notes]);
+const WRITABLE = new Set([TABLE_FIELDS.include, TABLE_FIELDS.notes, TABLE_FIELDS.adminNotes]);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });

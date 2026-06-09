@@ -43,6 +43,8 @@ const F = {
   'Retail Doors (est)': 'fldLmQuJrpWL3Nc77',
   'Include': 'fldAcAzSUDvpwYnTH',
   'IMN Notes': 'fldnBo5h14FyLK4dx',
+  'IG Followers': 'fldXv8D3TKHCPe0O0',
+  'Admin Notes': 'fldG9l6Gh6pIqqTfT',
 };
 const ID_TO_NAME = Object.fromEntries(Object.entries(F).map(([n, id]) => [id, n]));
 
