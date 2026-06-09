@@ -4,6 +4,17 @@ Live: https://ns-leads.vercel.app
 Repo: github.com/we-build-yours/ns-leads-web (auto-deploy via Vercel)
 Airtable base: `appabLn8sA9YObZ20` · Brands table `tblfNOtY2VthbPanL`
 
+## ✅ Done (2026-06-09, session 6)
+- **Restored IG follower count + per-card Admin Notes** (regressed in the rebuild; data was always in Airtable).
+  - **Followers row** reads `CEO IG Followers` (`fld1SudmVDQhiqxih`) — the scraped field — falling back to
+    `IG Followers` (`fldXv8D3TKHCPe0O0`). 40/70 creatine brands populated (1st Phorm 189K, Transparent Labs 54K,
+    Pink Stork 332K, RYSE 121K…). NOTE: `IG Followers` itself is empty for brands (it holds 529 *influencer*
+    rows); brand follower counts live on `CEO IG Followers`.
+  - **Admin Notes** (`fldG9l6Gh6pIqqTfT`, editable overwrite) box under the regular notes on every card —
+    saves on blur via `api/update.js` (whitelisted). Distinct from append-only IMN Notes.
+  - All 3 pages. Verified live in Chrome (counts render, no console errors).
+  - **PAT** Vercel env refreshed from MASTER_CONFIG (matched active `…f7aae94d89b`).
+
 ## ✅ Done (2026-06-02, session 5)
 - **Write-back added** (`api/update.js`, field-ID + whitelisted): editable from the web app.
   - **Notes**: each save **prepends** `[YYYY-MM-DD] <text>` to `IMN Notes` (append-only, no overwrite).
