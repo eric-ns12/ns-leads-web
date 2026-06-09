@@ -300,15 +300,14 @@
     }
 
     async function hydrateNavCounts() {
-      const HAS = 'viwXYjVkt7keSAOKU';
-      const VER = 'viwAoPiES9KMD3IVG';
-      const cur = window.PAGE_CONFIG.viewId;
-      if (cur === VER) {
-        document.getElementById('navCountVer').textContent = `(${RAW.length})`;
-        fetch(`/api/leads?view=${HAS}`).then(r => r.json()).then(d => {
-          document.getElementById('navCountHas').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
-        }).catch(() => {});
-      }
+      document.getElementById('navCountVer').textContent = `(${RAW.length})`;
+      // Has Creatine = all creatine (70); All Creatine = active subset. One fetch covers both.
+      fetch(`/api/leads?creatine=yes`).then(r => r.json()).then(d => {
+        const leads = d.leads || [];
+        const active = leads.filter((r) => r['Include'] === true).length;
+        document.getElementById('navCountHas').textContent = `(${(d.count ?? leads.length) || 0})`;
+        document.getElementById('navCountCre').textContent = `(${active})`;
+      }).catch(() => {});
     }
 
     const ACTIVE_FORMATS = new Set();

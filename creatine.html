@@ -304,11 +304,10 @@
     }
 
     async function hydrateNavCounts() {
-      // On creatine page — own count is RAW.length, fetch the other two.
-      document.getElementById('navCountCre').textContent = `(${RAW.length})`;
-      fetch(`/api/leads?view=viwXYjVkt7keSAOKU`).then(r => r.json()).then(d => {
-        document.getElementById('navCountHas').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
-      }).catch(() => {});
+      // creatine page RAW = all creatine (70); this tab shows the active subset.
+      const active = RAW.filter((r) => r['Include'] === true).length;
+      document.getElementById('navCountHas').textContent = `(${RAW.length})`;
+      document.getElementById('navCountCre').textContent = `(${active})`;
       fetch(`/api/leads?view=viwAoPiES9KMD3IVG`).then(r => r.json()).then(d => {
         document.getElementById('navCountVer').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
       }).catch(() => {});

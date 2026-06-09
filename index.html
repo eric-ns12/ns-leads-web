@@ -153,8 +153,8 @@
     // Page config — override per page (see verified.html)
     // ============================================================
     window.PAGE_CONFIG = window.PAGE_CONFIG || {
-      viewId: 'viwXYjVkt7keSAOKU',
-      countLabel: 'brands',
+      apiQuery: '?creatine=yes',   // everyone with a creatine product (active + inactive)
+      countLabel: 'brands with creatine',
     };
 
     // ============================================================
@@ -292,7 +292,8 @@
     async function init() {
       const cfg = window.PAGE_CONFIG;
       try {
-        const r = await fetch(`/api/leads?view=${encodeURIComponent(cfg.viewId)}`);
+        const apiUrl = cfg.apiQuery ? `/api/leads${cfg.apiQuery}` : `/api/leads?view=${encodeURIComponent(cfg.viewId)}`;
+        const r = await fetch(apiUrl);
         if (!r.ok) {
           const t = await r.text();
           throw new Error(`HTTP ${r.status}: ${t.slice(0, 200)}`);
@@ -312,21 +313,13 @@
     }
 
     async function hydrateNavCounts() {
-      const HAS = 'viwXYjVkt7keSAOKU';
-      const VER = 'viwAoPiES9KMD3IVG';
-      // If the current page already gave us one count, use it
-      const cur = window.PAGE_CONFIG.viewId;
-      if (cur === HAS) {
-        document.getElementById('navCountHas').textContent = `(${RAW.length})`;
-        fetch(`/api/leads?view=${VER}`).then(r => r.json()).then(d => {
-          document.getElementById('navCountVer').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
-        }).catch(() => {});
-      } else if (cur === VER) {
-        document.getElementById('navCountVer').textContent = `(${RAW.length})`;
-        fetch(`/api/leads?view=${HAS}`).then(r => r.json()).then(d => {
-          document.getElementById('navCountHas').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
-        }).catch(() => {});
-      }
+      // Has Creatine (this page) = all creatine (70). All Creatine = active subset. Verified = its view.
+      const active = RAW.filter((r) => r['Include'] === true).length;
+      document.getElementById('navCountHas').textContent = `(${RAW.length})`;
+      document.getElementById('navCountCre').textContent = `(${active})`;
+      fetch(`/api/leads?view=viwAoPiES9KMD3IVG`).then(r => r.json()).then(d => {
+        document.getElementById('navCountVer').textContent = `(${(d.count ?? (d.leads || []).length) || 0})`;
+      }).catch(() => {});
     }
 
     const ACTIVE_FORMATS = new Set();
